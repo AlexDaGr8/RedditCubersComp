@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <style>
+    body {
+    margin: 40px;
+    }
+
+    .wrapper {
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-gap: 10px;
+        background-color: #fff;
+        color: #444;
+    }
+    .wrapper > .box {
+        background-color: #444;
+        color: #fff;
+        border-radius: 5px;
+        padding: 20px;
+        font-size: 160%;
+    }
+    .wrapper > .box > h2:hover {
+        background-color: #555;
+    }
+    .inner-wrapper {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 2fr;
+        grid-gap: 10px;
+        color: #444;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height .5s;
+    }
+    .inner-wrapper.active {
+        max-height: 3000px;
+    }
+    .inner-wrapper > .box {
+        background-color: #444;
+        color: #fff;
+        border-radius: 5px;
+        padding: 5px 10px;
+        font-size: 120%;
+        text-align: center;
+    }
+    .inner-wrapper > .box-row {
+        background-color: #444;
+        color: #fff;
+        border-radius: 5px;
+        padding: 5px 10px;
+        font-size: 100%;
+        text-align: center;
+    }
+    .box-row a {
+        text-decoration: none;
+        color: #fff;
+    }
+    .box-row.gold, .box-row.gold a { color: #D9A441; }
+    .box-row.silver, .box-row.silver a { color: #A8A8A8; }
+    .box-row.bronze, .box-row.bronze a { color: #965A38; }
+    .banner {
+        background: url(https://styles.redditmedia.com/t5_2r6a3/styles/bannerBackgroundImage_ft9tufh58cg01.png) center top / cover no-repeat rgb(45, 151, 229);
+        width: 80vw;
+        height: 10vh;
+    }
+    h1 {
+        font-size: 4em;
+        text-align: center;
+    }
+    h1 a {        
+        text-decoration: none;
+        color: #111
+    }
+    h1 a:hover {        
+        color: #333
+    }
+    h2,h4 {
+        text-align: center;
+    }
+    h2 {
+        padding: 20px;
+        margin: 5px;
+        cursor: pointer;
+        border-radius: 5px; 
+    }
+    h4 {
+        margin: 5px;
+    }
+    </style>
+    <div id="title">
+        <div class="banner"></div>
+    </div>
+    <div class="wrapper" id="wrapper"></div>
+    <script type="text/javascript">
+    var data = loadDoc();
+    function loadDoc() {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+            if (xmlhttp.readyState == XMLHttpRequest.DONE) {
+                if (xmlhttp.status == 200) {
+                    var response = JSON.parse(xmlhttp.responseText);
+                    var data = [];
+                    var dataZ = response[0].data.children[0].data;
+                    var postInfo = {
+                        title: dataZ.title,
+                        author: dataZ.author,
+                        url: dataZ.url
+                    };
+                    response[1].data.children
+                        .forEach(function (d) {
+                            data.push({
+                                author: d.data.author,
+                                body: d.data.body
+                            })
+                        })
+                    useData(postInfo, data)
+                }
+                else if (xmlhttp.status == 400) {
+                    console.log('400 error')
+                }
+                else {
+                    console.log('some other error')
+                }
+            }
+        }
+
+        var sub = 'Cubers', id = '9chiue'
+        var url = "http://www.reddit.com/r/" + sub + "/comments/" + id + ".json?";
+        xmlhttp.open("GET", url, true)
+        xmlhttp.send();
+    }
+
+    function useData(postInfo, data) {
+        var title = document.getElementById('title');
+
+        var pageTitle = document.createElement('h1');
+        var pageLink = document.createElement('a');
+        pageLink.setAttribute('href', postInfo.url);
+        pageLink.innerText = postInfo.title;
+
+        var author = document.createElement('h4')
+        var authorLink = document.createElement('a');
+        authorLink.setAttribute('href', 'https://www.reddit.com/user/' + postInfo.author);
+        authorLink.innerText = 'u/' + postInfo.author;
+        author.innerHTML = 'Author: ';
+        author.appendChild(authorLink)
+
+        pageTitle.appendChild(pageLink);
+        title.appendChild(pageTitle);
+        title.appendChild(author)
+
+        var splitData = {
+            '2x2': [],
+            '3x3': [],
+            '4x4': [],
+            '3x3OH': [],
+            'Pyraminx': [],
+            'Skewb': [],
+            'Square-1': [],
+            'Clock': [],
+            'Megaminx': [],
+            'F2L': [],
+            '2GEN': [],
+            'LSE': [],
+            'COLL': [],
+            '3x3MirrorBlocks/Bump': [],
+            '3BLD': [],
+        }
+        var allCats = [];
+        data.forEach(function(d) {
+            var lines = d.body.split('\n\n')
+            lines.forEach(v => {
+                var lineSplit = v.split(':');
+                var cat = lineSplit[0].split('*')
+                if (cat[2] != undefined && cat[2] != '' && cat[2] != ' ') {
+                    var splitJoinCat = cat[2].split(' ').join('')
+                    allCats.push(splitJoinCat);
+                    //var regex = /\b\d+(\.|,)\d+\b/g;
+                    var regex = /\b(\d+:\d+\.\d+|\d+(\.|,)\d+)\b/g;
+                    var times = v.match(regex);
+                    if (times != null) {
+                        var avgSeconds = 0;
+                        var timeSplit = times[0].split(':');
+                        if (timeSplit.length > 1) avgSeconds = +(+(timeSplit[0] * 60) + +timeSplit[1]).toFixed(2);
+                        else avgSeconds = +timeSplit[0]  
+                        splitData[splitJoinCat].push({
+                            auth: d.author,
+                            times: times.slice(1, 6),
+                            avg: times[0],
+                            avgSeconds: avgSeconds
+                        })
+                    }
+                }
+            })
+        })
+        
+       createGrid(allCats,splitData)
+    }
+    function createGrid(cats,data) {
+        var wrapper = document.getElementById('wrapper');
+        [...new Set(cats.map(d => d))].forEach(d => {
+            var box = document.createElement('div');
+            box.classList.add('box')
+            var title = document.createElement('h2');
+            title.innerHTML = d;
+            title.addEventListener('click', function(el) {
+                el.currentTarget.nextElementSibling.classList.toggle('active')
+            })
+            box.appendChild(title);
+            
+            var table = createTable();
+
+            data[d].sort((a,b) => a.avgSeconds - b.avgSeconds).forEach((v,i) => {
+                var maxMinInd = convertToSeconds(v.times);
+                v.times[maxMinInd[0]] = '(' + v.times[maxMinInd[0]] + ')';
+                v.times[maxMinInd[1]] = '(' + v.times[maxMinInd[1]] + ')';
+
+                var row = addRow(v,i);
+                table.appendChild(row[0])
+                table.appendChild(row[1])
+                table.appendChild(row[2])
+                table.appendChild(row[3])
+            })
+            box.appendChild(table)
+
+            wrapper.appendChild(box)
+        })
+    }
+    function createTable() {
+        var grid = document.createElement('div');
+        grid.classList.add('inner-wrapper');
+
+        var place = document.createElement('div');
+        place.classList.add('box');
+        var h4Place = document.createElement('h4');
+        h4Place.innerText = 'Place';
+        place.appendChild(h4Place)
+
+        var auth = document.createElement('div');
+        auth.classList.add('box');
+        var h4Auth = document.createElement('h4');
+        h4Auth.innerText = 'Author';
+        auth.appendChild(h4Auth)
+
+        var time = document.createElement('div');
+        time.classList.add('box');
+        var h4Time = document.createElement('h4');
+        h4Time.innerText = 'Time';
+        time.appendChild(h4Time)
+
+        var allTimes = document.createElement('div');
+        allTimes.classList.add('box');
+        var h4allTimes = document.createElement('h4');
+        h4allTimes.innerText = 'All Times';
+        allTimes.appendChild(h4allTimes)
+
+        grid.appendChild(place);
+        grid.appendChild(auth);
+        grid.appendChild(time);
+        grid.appendChild(allTimes);
+        return grid;
+    }
+    function addRow(data,ind) {
+        var places = ['gold', 'silver', 'bronze'];
+
+        var place = document.createElement('div');
+        place.classList.add('box-row');
+        var auth = document.createElement('div');
+        auth.classList.add('box-row');
+        var time = document.createElement('div');
+        time.classList.add('box-row');
+        var allTimes = document.createElement('div');
+        allTimes.classList.add('box-row');
+        if (ind < 3) {
+            place.classList.add(places[ind]);
+            auth.classList.add(places[ind]);
+            time.classList.add(places[ind]);
+            allTimes.classList.add(places[ind]);
+        }
+
+        var link = document.createElement('a');
+        link.setAttribute('href', 'https://www.reddit.com/user/' + data.auth);
+        link.innerText = 'u/' + data.auth;
+
+        place.innerText = ind+1;
+        auth.appendChild(link);
+        time.innerText = data.avg;
+        allTimes.innerText = data.times.join(', ')
+
+        return [place,auth,time,allTimes];
+    }
+    function convertToSeconds(times) {
+        var arr = [];
+        times.forEach(time => {
+            var seconds = 0;
+            var timeSplit = time.split(':');
+            if (timeSplit.length > 1) seconds = +(+(timeSplit[0] * 60) + +timeSplit[1]).toFixed(2);
+            else seconds = +timeSplit[0]
+            arr.push(seconds);
+        })
+        return [arr.indexOf(Math.max(...arr)),arr.indexOf(Math.min(...arr))];
+    }
+    </script>
+</body>
+</html>
